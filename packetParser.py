@@ -16,3 +16,5 @@ def parse_packet(packet):
 
     elif packet.haslayer(UDP):
         packet_info["protocol"] = "UDP"
+
+    return packet_info
