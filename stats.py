@@ -10,3 +10,9 @@ def update_stats(packet_data):
 
     protocol = packet_data["protocol"]
     protocol_counts[protocol] += 1
+
+def get_stats():
+    return {
+"total_packets": total_packets,
+"protocol_breakdown": dict(protocol_counts)
+}
