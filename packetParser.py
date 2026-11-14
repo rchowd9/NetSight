@@ -13,3 +13,6 @@ def parse_packet(packet):
 
     if packet.haslayer(TCP):
         packet_info["protocol"] = "TCP"
+
+    elif packet.haslayer(UDP):
+        packet_info["protocol"] = "UDP"
