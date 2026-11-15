@@ -15,3 +15,24 @@ def home():
         "message":
         "NetSight AI Network Traffic Analyzer"
     }
+
+@app.get("/stats")
+def stats():
+    return get_stats()
+
+
+if __name__ == "__main__":
+    sniffer_thread = Thread(
+        target=start_capture,
+        daemon=True
+    )
+
+    sniffer_thread.start()
+
+    import uvicorn
+
+    uvicorn.run(
+        app,
+        host="0.0.0.0",
+        port=8000
+    )
