@@ -12,3 +12,11 @@ def process_packet(packet):
     )
 
     update_stats(parsed)
+
+def start_capture():
+    print("NetSight AI started...")
+
+sniff(
+    prn=process_packet,
+    store=False
+)
