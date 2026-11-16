@@ -4,9 +4,12 @@ Two layers:
 
 1. Machine learning: an Isolation Forest (unsupervised) learns what "normal"
    behaviour per source IP looks like on *this* network, using features
-   aggregated over short time windows. Windows that look very different from
-   the baseline are flagged. The model is retrained periodically so the
-   baseline follows the network.
+   aggregated over short time windows. Its alert threshold is calibrated on
+   the training data's own score distribution. Because Isolation Forest
+   scores points far outside the training range no worse than points at its
+   edge, it is paired with a robust z-score (median/MAD) per feature, which
+   also explains *which* features made a window anomalous. The model is
+   retrained periodically so the baseline follows the network.
 
 2. Rules: explainable signatures for well-known attacks (port scans,
    SYN floods, DNS floods, traffic spikes). These fire immediately, even
@@ -39,6 +42,11 @@ SYN_FLOOD_RATIO = 0.8
 DNS_FLOOD_QUERIES = 50
 HIGH_RATE_PACKETS = 2000
 
+# ML thresholds
+SCORE_PERCENTILE = 1      # flag scores below the 1st percentile of training
+Z_SCORE_LIMIT = 6         # robust z-score that counts as "far outside normal"
+MIN_MAD = 0.25            # floor for features that barely vary
+
 FEATURE_NAMES = [
     "packets", "bytes", "unique_dst_ips", "unique_dst_ports",
     "syn_ratio", "avg_packet_size", "dns_packets",
@@ -62,6 +70,9 @@ class AnomalyDetector:
         self._window = defaultdict(_new_window)
         self._training = deque(maxlen=MAX_TRAINING_SAMPLES)
         self._model = None
+        self._score_threshold = None
+        self._median = None
+        self._mad = None
         self._windows_since_train = 0
         self._last_alert = {}
         self._alert_id = 0
@@ -120,7 +131,8 @@ class AnomalyDetector:
                 f"in {WINDOW_SECONDS}s",
             ))
         if (f["packets"] * f["syn_ratio"] >= SYN_FLOOD_MIN_SYNS
-                and f["syn_ratio"] >= SYN_FLOOD_RATIO):
+                and f["syn_ratio"] >= SYN_FLOOD_RATIO
+                and f["unique_dst_ports"] < PORT_SCAN_UNIQUE_PORTS):
             hits.append((
                 "SYN Flood", "critical",
                 f"{int(f['packets'] * f['syn_ratio'])} SYN packets without "
@@ -160,9 +172,16 @@ class AnomalyDetector:
 
     def _train(self):
         model = IsolationForest(
-            n_estimators=100, contamination=0.02, random_state=42
+            n_estimators=100, contamination="auto", random_state=42
         )
-        model.fit(np.array(self._training))
+        X = np.array(self._training)
+        model.fit(X)
+        self._score_threshold = float(
+            np.percentile(model.decision_function(X), SCORE_PERCENTILE)
+        )
+        self._median = np.median(X, axis=0)
+        mad = np.median(np.abs(X - self._median), axis=0) * 1.4826
+        self._mad = np.maximum(mad, MIN_MAD)
         self._model = model
         self._windows_since_train = 0
 
@@ -186,16 +205,34 @@ class AnomalyDetector:
                 self._add_alert(now, src, kind, severity, desc, f)
 
         if ML_AVAILABLE and self._model is not None:
-            scores = self._model.decision_function(np.array(vectors))
-            for src, f, score in zip(sources, features, scores):
-                if score < 0 and src not in rule_flagged:
-                    self._add_alert(
-                        now, src, "Unusual Behaviour",
-                        "high" if score < -0.1 else "low",
-                        "Traffic pattern deviates from the learned baseline "
-                        f"(anomaly score {score:.3f})",
-                        f, score=round(float(score), 4), method="ml",
-                    )
+            X = np.array(vectors)
+            scores = self._model.decision_function(X)
+            z_scores = np.abs(X - self._median) / self._mad
+            for src, f, score, z in zip(sources, features, scores, z_scores):
+                if src in rule_flagged:
+                    continue
+                forest_hit = score < self._score_threshold
+                outlier_features = [
+                    FEATURE_NAMES[i] for i in np.argsort(-z)
+                    if z[i] >= Z_SCORE_LIMIT
+                ]
+                if not (forest_hit or outlier_features):
+                    continue
+                top = outlier_features or [
+                    FEATURE_NAMES[i] for i in np.argsort(-z)[:2]
+                ]
+                severity = (
+                    "high" if forest_hit and outlier_features
+                    or z.max() >= 2 * Z_SCORE_LIMIT
+                    else "low"
+                )
+                self._add_alert(
+                    now, src, "Unusual Behaviour", severity,
+                    "Deviates from learned baseline, mainly in "
+                    + ", ".join(top[:3])
+                    + f" (anomaly score {score:.3f})",
+                    f, score=round(float(score), 4), method="ml",
+                )
 
         # Only learn from traffic the rules didn't flag as an attack.
         self._training.extend(
