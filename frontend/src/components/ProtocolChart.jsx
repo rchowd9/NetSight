@@ -1,41 +1,43 @@
 import {
-  PieChart,
-  Pie,
-  Tooltip,
   Cell,
+  Legend,
+  Pie,
+  PieChart,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 
-const COLORS = [
-  "#2563eb",
-  "#22c55e",
-  "#f59e0b",
-  "#ef4444",
-];
+import { protocolColor } from "./protocolColors";
 
 function ProtocolChart({ data }) {
-return (
-<ResponsiveContainer width="100%" height={350}>
-<PieChart>
-<Pie
-data={data}
-dataKey="value"
-nameKey="name"
-outerRadius={120}
-label
->
-{data.map((entry, index) => (
-<Cell
-key={index}
-fill={COLORS[index % COLORS.length]}
-/>
-))}
-</Pie>
- 
-<Tooltip />
-</PieChart>
-</ResponsiveContainer>
-);
+  if (!data.length) {
+    return <p className="empty">No packets captured yet.</p>;
+  }
+
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="name"
+          innerRadius={60}
+          outerRadius={100}
+          paddingAngle={2}
+          stroke="none"
+        >
+          {data.map((entry) => (
+            <Cell key={entry.name} fill={protocolColor(entry.name)} />
+          ))}
+        </Pie>
+        <Tooltip
+          contentStyle={{ background: "#0f172a", border: "1px solid #1e293b" }}
+          itemStyle={{ color: "#e2e8f0" }}
+        />
+        <Legend />
+      </PieChart>
+    </ResponsiveContainer>
+  );
 }
- 
+
 export default ProtocolChart;

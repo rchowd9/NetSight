@@ -1,16 +1,9 @@
-function StatsCard({ title, value }) {
+function StatsCard({ title, value, hint, tone }) {
   return (
-    <div
-      style={{
-        background: "#ffffff",
-        padding: "20px",
-        borderRadius: "12px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        minWidth: "200px",
-      }}
-    >
-      <h3>{title}</h3>
-      <h1>{value}</h1>
+    <div className={`stats-card ${tone ? `tone-${tone}` : ""}`}>
+      <span className="stats-title">{title}</span>
+      <span className="stats-value">{value}</span>
+      {hint && <span className="stats-hint">{hint}</span>}
     </div>
   );
 }
