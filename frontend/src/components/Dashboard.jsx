@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 
-import { getAlerts, getPackets, getStats } from "../services/api";
+import {
+  API_BASE_URL,
+  getAlerts,
+  getPackets,
+  getStats,
+} from "../services/api";
 
 import AlertsPanel from "./AlertsPanel";
 import ProtocolChart from "./ProtocolChart";
@@ -43,8 +48,8 @@ function Dashboard() {
       setError(null);
     } catch {
       setError(
-        "Cannot reach the NetSight backend on http://localhost:8000. " +
-          "Is it running (as Administrator)?"
+        `Cannot reach the NetSight backend at ${API_BASE_URL}. ` +
+          "Check VITE_API_URL and confirm the backend is running and allows this site in CORS."
       );
     }
   }, [protocolFilter]);

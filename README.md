@@ -67,6 +67,7 @@ The API runs at http://localhost:8000 (interactive docs at `/docs`).
 Optional environment variables:
 - `NETSIGHT_IFACE`: the network interface to capture on (default: the system default)
 - `NETSIGHT_FILTER`: a BPF filter, e.g. `tcp or udp port 53`
+- `NETSIGHT_CORS_ORIGINS`: comma-separated allowed frontend origins (defaults to the local Vite URLs)
 
 ### Frontend
 ```bash
@@ -75,6 +76,22 @@ npm install
 npm run dev
 ```
 Open http://localhost:5173.
+
+### Deploying the frontend to Vercel
+
+1. Import the repository in Vercel and set the project **Root Directory** to `frontend`.
+   Vercel detects Vite automatically; use `npm run build` and `dist` if prompted.
+2. Set the Vercel project environment variable `VITE_API_URL` to the public base URL
+   of your separately hosted NetSight API (for example, `https://api.example.com`).
+   Set it for each environment you deploy, then redeploy.
+3. On the backend host, set `NETSIGHT_CORS_ORIGINS` to the exact Vercel site origin,
+   such as `https://your-project.vercel.app` (no path or trailing slash), and restart
+   the API.
+
+Vercel hosts the static frontend only. The API requires a continuously running host
+with access to the network interface being monitored; Vercel serverless functions
+cannot run this packet-capture service. The frontend and backend must both be
+reachable over HTTPS in production.
 
 ## API
 
