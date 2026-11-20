@@ -82,9 +82,22 @@ def get_stats():
         }
 
 
-def get_recent_packets(limit=100, protocol=None):
+def get_recent_packets(limit=100, protocol=None, search=None):
     with _lock:
         packets = list(_recent_packets)
     if protocol:
         packets = [p for p in packets if p["protocol"] == protocol.upper()]
+    if search:
+        needle = search.strip().lower()
+        if needle:
+            packets = [
+                p for p in packets
+                if needle in " ".join(
+                    str(p.get(field) or "")
+                    for field in (
+                        "protocol", "source_ip", "destination_ip",
+                        "source_port", "destination_port", "info",
+                    )
+                ).lower()
+            ]
     return packets[-limit:][::-1]  # newest first

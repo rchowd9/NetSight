@@ -59,8 +59,9 @@ def stats():
 def packets(
     limit: int = Query(100, ge=1, le=500),
     protocol: str | None = None,
+    search: str | None = None,
 ):
-    return get_recent_packets(limit=limit, protocol=protocol)
+    return get_recent_packets(limit=limit, protocol=protocol, search=search)
 
 
 @app.get("/alerts")

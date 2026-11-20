@@ -32,6 +32,7 @@ function Dashboard() {
   const [packets, setPackets] = useState([]);
   const [alertData, setAlertData] = useState({ alerts: [], status: null });
   const [protocolFilter, setProtocolFilter] = useState("");
+  const [search, setSearch] = useState("");
   const [paused, setPaused] = useState(false);
   const [error, setError] = useState(null);
 
@@ -39,7 +40,7 @@ function Dashboard() {
     try {
       const [s, p, a] = await Promise.all([
         getStats(),
-        getPackets(100, protocolFilter),
+        getPackets(100, protocolFilter, search),
         getAlerts(),
       ]);
       setStats(s);
@@ -52,7 +53,7 @@ function Dashboard() {
           "Check VITE_API_URL and confirm the backend is running and allows this site in CORS."
       );
     }
-  }, [protocolFilter]);
+  }, [protocolFilter, search]);
 
   useEffect(() => {
     if (paused) return undefined;
@@ -145,7 +146,11 @@ function Dashboard() {
             </button>
           </div>
         </div>
-        <TrafficTable packets={packets} />
+        <TrafficTable
+          packets={packets}
+          search={search}
+          onSearchChange={setSearch}
+        />
       </section>
     </main>
   );

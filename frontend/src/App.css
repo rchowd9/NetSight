@@ -184,6 +184,29 @@
 }
 
 /* Traffic table */
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.packet-search {
+  flex: 1;
+  min-width: 220px;
+  font: inherit;
+  color: var(--text-h);
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.packet-search:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 .table-wrap {
   max-height: 480px;
   overflow: auto;
