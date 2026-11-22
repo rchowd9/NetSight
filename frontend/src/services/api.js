@@ -1,7 +1,10 @@
 import axios from "axios";
 
+// Dev: "/api" goes through the Vite proxy (see vite.config.js), so no CORS.
+// Production (e.g. Vercel): set VITE_API_URL to the public backend URL.
 export const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:8000";
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "/api" : "http://localhost:8000");
 
 const API = axios.create({
   baseURL: API_BASE_URL,
