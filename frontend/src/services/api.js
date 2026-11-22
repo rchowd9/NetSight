@@ -23,4 +23,7 @@ export const getPackets = (limit = 100, protocol, search) =>
 export const getAlerts = (limit = 50) =>
   API.get("/alerts", { params: { limit } }).then((r) => r.data);
 
+export const resetSession = () =>
+  API.post("/reset").then((r) => r.data);
+
 export default API;

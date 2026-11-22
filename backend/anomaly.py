@@ -270,5 +270,19 @@ class AnomalyDetector:
             "features": FEATURE_NAMES,
         }
 
+    def reset(self):
+        with self._lock:
+            self._window = defaultdict(_new_window)
+            self._training.clear()
+            self._model = None
+            self._score_threshold = None
+            self._median = None
+            self._mad = None
+            self._windows_since_train = 0
+            self._last_alert = {}
+            self._alert_id = 0
+            self.alerts.clear()
+            self.windows_processed = 0
+
 
 detector = AnomalyDetector()

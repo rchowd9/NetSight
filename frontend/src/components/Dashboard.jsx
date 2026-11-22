@@ -5,6 +5,7 @@ import {
   getAlerts,
   getPackets,
   getStats,
+  resetSession,
 } from "../services/api";
 
 import AlertsPanel from "./AlertsPanel";
@@ -35,6 +36,7 @@ function Dashboard() {
   const [search, setSearch] = useState("");
   const [paused, setPaused] = useState(false);
   const [error, setError] = useState(null);
+  const [resetting, setResetting] = useState(false);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -78,9 +80,45 @@ function Dashboard() {
     ["high", "critical"].includes(a.severity)
   ).length;
 
+  const handleReset = async () => {
+    if (!window.confirm(
+      "Reset packet counts, traffic history, alerts, and the anomaly baseline?"
+    )) return;
+    setResetting(true);
+    try {
+      await resetSession();
+      await fetchAll();
+    } catch {
+      setError("Could not reset the NetSight session.");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const captureStatus = stats.capture;
+  const captureHealthy = captureStatus?.running && !captureStatus.error;
+  const captureLabel = captureHealthy
+    ? "Capture active"
+    : captureStatus?.error
+      ? "Capture stopped"
+      : "Starting capture";
+
   return (
     <main className="dashboard">
       {error && <div className="banner banner-error">{error}</div>}
+
+      <div className="session-toolbar">
+        <div className="capture-status">
+          <span className={`status-dot ${captureHealthy ? "on" : "learning"}`} />
+          <span>{captureLabel}</span>
+          {captureStatus?.interface && (
+            <span className="capture-interface">{captureStatus.interface}</span>
+          )}
+        </div>
+        <button type="button" onClick={handleReset} disabled={resetting}>
+          {resetting ? "Resetting..." : "Reset Session"}
+        </button>
+      </div>
 
       <section className="cards">
         <StatsCard

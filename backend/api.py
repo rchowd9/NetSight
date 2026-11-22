@@ -6,8 +6,8 @@ from fastapi import FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from anomaly import detector
-from packetCapture import start_capture
-from stats import get_recent_packets, get_stats
+from packetCapture import get_capture_status, reset_capture_status, start_capture
+from stats import get_recent_packets, get_stats, reset_stats
 
 
 @asynccontextmanager
@@ -40,7 +40,7 @@ cors_origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
-    allow_methods=["GET"],
+    allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
 
@@ -52,7 +52,7 @@ def home():
 
 @app.get("/stats")
 def stats():
-    return get_stats()
+    return {**get_stats(), "capture": get_capture_status()}
 
 
 @app.get("/packets")
@@ -67,6 +67,14 @@ def packets(
 @app.get("/alerts")
 def alerts(limit: int = Query(50, ge=1, le=200)):
     return {"status": detector.get_status(), "alerts": detector.get_alerts(limit)}
+
+
+@app.post("/reset")
+def reset():
+    reset_stats()
+    detector.reset()
+    reset_capture_status(os.getenv("NETSIGHT_IFACE"))
+    return {"message": "NetSight session data reset"}
 
 
 if __name__ == "__main__":

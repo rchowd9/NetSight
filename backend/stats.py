@@ -101,3 +101,20 @@ def get_recent_packets(limit=100, protocol=None, search=None):
                 ).lower()
             ]
     return packets[-limit:][::-1]  # newest first
+
+
+def reset_stats():
+    global _protocol_counts, _source_counts, _destination_counts
+    global _recent_packets, _timeline, _total_packets, _total_bytes
+    global _start_time, _packet_id
+
+    with _lock:
+        _protocol_counts = Counter()
+        _source_counts = Counter()
+        _destination_counts = Counter()
+        _recent_packets = deque(maxlen=MAX_RECENT_PACKETS)
+        _timeline = {}
+        _total_packets = 0
+        _total_bytes = 0
+        _start_time = time.time()
+        _packet_id = 0
