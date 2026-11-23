@@ -77,6 +77,14 @@ def reset():
     return {"message": "NetSight session data reset"}
 
 
+@app.post("/alerts/{alert_id}/acknowledge")
+def acknowledge_alert(alert_id: int):
+    if not detector.acknowledge_alert(alert_id):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Alert not found")
+    return {"message": "Alert acknowledged", "alert_id": alert_id}
+
+
 if __name__ == "__main__":
     import uvicorn
 

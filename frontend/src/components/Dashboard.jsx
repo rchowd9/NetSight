@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import {
   API_BASE_URL,
+  acknowledgeAlert,
   getAlerts,
   getPackets,
   getStats,
@@ -95,6 +96,15 @@ function Dashboard() {
     }
   };
 
+  const handleAcknowledge = async (alertId) => {
+    try {
+      await acknowledgeAlert(alertId);
+      await fetchAll();
+    } catch {
+      setError("Could not acknowledge the alert.");
+    }
+  };
+
   const captureStatus = stats.capture;
   const captureHealthy = captureStatus?.running && !captureStatus.error;
   const captureLabel = captureHealthy
@@ -153,7 +163,11 @@ function Dashboard() {
       <section className="grid grid-1-1">
         <div className="panel">
           <h2>AI Anomaly Detection</h2>
-          <AlertsPanel alerts={alertData.alerts} status={alertData.status} />
+          <AlertsPanel
+            alerts={alertData.alerts}
+            status={alertData.status}
+            onAcknowledge={handleAcknowledge}
+          />
         </div>
         <div className="panel">
           <h2>Top Talkers</h2>

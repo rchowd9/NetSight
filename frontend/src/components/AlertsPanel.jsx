@@ -20,7 +20,7 @@ function ModelStatus({ status }) {
   );
 }
 
-function AlertsPanel({ alerts, status }) {
+function AlertsPanel({ alerts, status, onAcknowledge }) {
   return (
     <div>
       <ModelStatus status={status} />
@@ -44,6 +44,19 @@ function AlertsPanel({ alerts, status }) {
               </div>
               <div className="alert-body">
                 <span className="mono">{a.source_ip}</span>: {a.description}
+              </div>
+              <div className="alert-actions">
+                {a.acknowledged ? (
+                  <span className="acknowledged">Acknowledged</span>
+                ) : (
+                  <button
+                    type="button"
+                    className="acknowledge-button"
+                    onClick={() => onAcknowledge(a.id)}
+                  >
+                    Acknowledge
+                  </button>
+                )}
               </div>
             </li>
           ))}

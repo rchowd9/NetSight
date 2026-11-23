@@ -76,6 +76,7 @@ class AnomalyDetector:
         self._windows_since_train = 0
         self._last_alert = {}
         self._alert_id = 0
+        self._acknowledged_alerts = set()
         self.alerts = deque(maxlen=MAX_ALERTS)
         self.windows_processed = 0
 
@@ -168,6 +169,7 @@ class AnomalyDetector:
             "score": score,
             "description": description,
             "features": features,
+            "acknowledged": False,
         })
 
     def _train(self):
@@ -256,7 +258,20 @@ class AnomalyDetector:
                 print(f"[anomaly] error: {exc}")
 
     def get_alerts(self, limit=50):
-        return list(self.alerts)[:limit]
+        alerts = []
+        for alert in list(self.alerts)[:limit]:
+            alerts.append({
+                **alert,
+                "acknowledged": alert["id"] in self._acknowledged_alerts,
+            })
+        return alerts
+
+    def acknowledge_alert(self, alert_id):
+        if not any(alert["id"] == alert_id for alert in self.alerts):
+            return False
+        with self._lock:
+            self._acknowledged_alerts.add(alert_id)
+        return True
 
     def get_status(self):
         return {
@@ -281,6 +296,7 @@ class AnomalyDetector:
             self._windows_since_train = 0
             self._last_alert = {}
             self._alert_id = 0
+            self._acknowledged_alerts = set()
             self.alerts.clear()
             self.windows_processed = 0
 

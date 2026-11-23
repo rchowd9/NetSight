@@ -100,6 +100,7 @@ reachable over HTTPS in production.
 | `GET /stats` | Totals, packets/sec, protocol breakdown, top talkers, 60s timeline |
 | `GET /packets?limit=100&protocol=DNS&search=192.0.2.1` | Most recent packets, newest first, with optional protocol and text filters |
 | `GET /alerts?limit=50` | Anomaly alerts and the ML model's status |
+| `POST /alerts/{id}/acknowledge` | Mark an anomaly alert as acknowledged |
 
 ## Testing the detector
 

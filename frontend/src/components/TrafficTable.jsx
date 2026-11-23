@@ -44,6 +44,27 @@ function exportPackets(packets) {
   URL.revokeObjectURL(url);
 }
 
+function exportPacketsJson(packets) {
+  const data = packets.map((packet) => ({
+    id: packet.id,
+    timestamp: new Date(packet.timestamp * 1000).toISOString(),
+    source: endpoint(packet.source_ip, packet.source_port),
+    destination: endpoint(packet.destination_ip, packet.destination_port),
+    protocol: packet.protocol,
+    length: packet.length,
+    info: packet.info,
+  }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json;charset=utf-8",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `netsight-packets-${new Date().toISOString().slice(0, 10)}.json`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 function TrafficTable({ packets, search, onSearchChange }) {
   if (!packets.length) {
     return (
@@ -76,6 +97,9 @@ function TrafficTable({ packets, search, onSearchChange }) {
         />
         <button type="button" onClick={() => exportPackets(packets)}>
           Export CSV
+        </button>
+        <button type="button" onClick={() => exportPacketsJson(packets)}>
+          Export JSON
         </button>
       </div>
       <div className="table-wrap">
